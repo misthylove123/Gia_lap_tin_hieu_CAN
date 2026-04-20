@@ -1,0 +1,40 @@
+#include <SPI.h>
+#include <mcp_can.h>
+
+const int SPI_CS_PIN = 10;
+MCP_CAN CAN(SPI_CS_PIN);
+
+const int POT_PIN = A0;      // Biến trở Ga cắm A0
+const int PIN_WHEEL = A1;    // Biến trở Vô lăng cắm A1
+
+void setup() {
+  Serial.begin(9600);
+  
+  if(CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("NODE A: Khoi tao CAN thanh cong! Xe da san sang!");
+    CAN.setMode(MCP_NORMAL);
+  } else {
+    Serial.println("NODE A: Loi khoi tao CAN!");
+    while(1);
+  }
+}
+
+void loop() {
+  // Đọc liên tục 2 biến trở
+  int potValue = analogRead(POT_PIN);
+  byte speed = map(potValue, 0, 1023, 0, 255);
+  
+  int wheelValue = analogRead(PIN_WHEEL);
+  byte steering = map(wheelValue, 0, 1023, 10, 170); // Giới hạn góc lái 10-170 độ
+
+  // Đóng gói 2 byte: Byte 0 là Ga, Byte 1 là Vô lăng
+  byte data[2] = {speed, steering};
+  
+  // Gửi thẳng sang Node B qua ID 0x030
+  CAN.sendMsgBuf(0x030, 0, 2, data);
+
+  Serial.print("Đang gửi -> Ga: "); Serial.print(speed);
+  Serial.print(" | Vô lăng: "); Serial.println(steering);
+  
+  delay(50); // Lấy mẫu 20 lần/giây
+}

@@ -1,0 +1,121 @@
+#include <SPI.h>
+#include <mcp_can.h>
+#include <Servo.h>
+
+const int SPI_CS_PIN = 10;
+MCP_CAN CAN(SPI_CS_PIN);
+
+// KHAI BÁO CHÂN L298N
+const int ENA = 3; const int IN1 = 4; const int IN2 = 5;
+const int ENB = 6; const int IN3 = 7; const int IN4 = 8;
+
+// KHAI BÁO ADAS
+Servo myServo;
+const int pulse0 = 515; const int pulse90 = 1515; const int pulse180 = 2515;
+const int pinSensorL = A1; const int pinSensorR = A2;
+const int pinTrig = A3; const int pinEcho = A0;
+const int TRANG_THAI_VACH = LOW;
+
+// BIẾN ĐIỀU KHIỂN
+int targetSpeed = 0; int actualSpeed = 0;
+const int MOC_PHANH_AEB = 5; const int MOC_GIAM_ACC = 30;
+
+float currentAngle = 90.0; int targetAngle = 90; int manualSteering = 90;
+unsigned long timeLostLine = 0; bool isWaitingToReturn = false;
+
+void setup() {
+  Serial.begin(9600);
+  
+  pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  digitalWrite(IN1, HIGH); digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH); digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0); analogWrite(ENB, 0); 
+
+  myServo.attach(9, 500, 2600);
+  pinMode(pinSensorL, INPUT); pinMode(pinSensorR, INPUT);
+  myServo.writeMicroseconds(pulse90);
+  pinMode(pinTrig, OUTPUT); pinMode(pinEcho, INPUT);
+
+  if(CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("NODE B: San sang nhan lenh!");
+    CAN.setMode(MCP_NORMAL);
+  } else {
+    Serial.println("NODE B: Loi khoi tao CAN!");
+    while(1);
+  }
+}
+
+// Hàm đọc siêu âm
+long docKhoangCach() {
+  digitalWrite(pinTrig, LOW); delayMicroseconds(2);
+  digitalWrite(pinTrig, HIGH); delayMicroseconds(10);
+  digitalWrite(pinTrig, LOW);
+  long duration = pulseIn(pinEcho, HIGH, 30000);
+  if (duration == 0) return 999;
+  return duration * 0.034 / 2;
+}
+
+void loop() {
+  // ==========================================
+  // 1. NHẬN LỆNH TỪ MẠNG CAN (NODE A)
+  // ==========================================
+  long unsigned int rxId;
+  unsigned char len = 0;
+  unsigned char rxBuf[8];
+
+  if(CAN_MSGAVAIL == CAN.checkReceive()) {
+    CAN.readMsgBuf(&rxId, &len, rxBuf);
+    
+    if(rxId == 0x030) {
+      targetSpeed = rxBuf[0];      // Lấy mức Ga
+      manualSteering = rxBuf[1];   // Lấy góc Vô lăng
+      
+      Serial.print("Đã nhận <- Ga: "); Serial.print(targetSpeed);
+      Serial.print(" | Vô lăng: "); Serial.println(manualSteering);
+    }
+  }
+
+  // ==========================================
+  // 2. ACC / AEB (ĐIỀU KHIỂN TỐC ĐỘ)
+  // ==========================================
+  long distance = docKhoangCach();
+  if (distance <= MOC_PHANH_AEB) {
+    actualSpeed = 0; // AEB: Phanh gấp
+  } else if (distance <= MOC_GIAM_ACC) {
+    actualSpeed = map(distance, MOC_PHANH_AEB, MOC_GIAM_ACC, 0, targetSpeed); // ACC: Bám đuôi
+  } else {
+    actualSpeed = targetSpeed; // Chạy bình thường
+  }
+
+  analogWrite(ENA, actualSpeed);
+  analogWrite(ENB, actualSpeed);
+
+  // ==========================================
+  // 3. LKA (ĐIỀU KHIỂN GÓC LÁI)
+  // ==========================================
+  int valL = digitalRead(pinSensorL);
+  int valR = digitalRead(pinSensorR);
+
+  if (valL == TRANG_THAI_VACH && valR != TRANG_THAI_VACH) {
+    targetAngle = 170; timeLostLine = millis(); isWaitingToReturn = true;
+  } else if (valR == TRANG_THAI_VACH && valL != TRANG_THAI_VACH) {
+    targetAngle = 10; timeLostLine = millis(); isWaitingToReturn = true;
+  } else {
+    if (isWaitingToReturn) {
+      if (millis() - timeLostLine >= 1000) isWaitingToReturn = false;
+    } else {
+      targetAngle = manualSteering; // Trả quyền cho Node A (Vô lăng tay)
+    }
+  }
+
+  // Bẻ Servo mượt mà
+  if (abs(currentAngle - targetAngle) > 0.5) {
+    currentAngle += (targetAngle - currentAngle) * 0.05;
+    if (currentAngle < 10.0) currentAngle = 10.0;
+    if (currentAngle > 170.0) currentAngle = 170.0;
+    myServo.writeMicroseconds(map((int)currentAngle, 0, 180, pulse0, pulse180));
+  }
+
+  delay(15);
+}
