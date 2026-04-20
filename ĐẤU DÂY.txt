@@ -1,0 +1,99 @@
+NODE A
+
+1. Biến trở Chân Ga (Potentiometer)
+
+Chân Giữa (OUT/Signal) ---> Cắm vào chân A0 của Arduino
+
+Chân Bìa 1 (VCC) ---> Cắm vào nguồn 5V
+
+Chân Bìa 2 (GND) ---> Cắm vào chân GND
+
+2. Biến trở Vô Lăng (Potentiometer)
+
+Chân Giữa (OUT/Signal) ---> Cắm vào chân A1 của Arduino
+
+Chân Bìa 1 (VCC) ---> Cắm vào nguồn 5V
+
+Chân Bìa 2 (GND) ---> Cắm vào chân GND
+
+3. Module CAN Bus (MCP2515)
+
+Chân CS ---> Cắm vào chân D10 của Arduino
+
+Chân SCK ---> Cắm vào chân D13 của Arduino
+
+Chân MOSI ---> Cắm vào chân D11 của Arduino
+
+Chân MISO ---> Cắm vào chân D12 của Arduino
+
+Chân VCC ---> Cắm vào nguồn 5V
+
+Chân GND ---> Cắm vào chân GND
+
+NODE B
+
+1. Mạch Điều Khiển Động Cơ (L298N)
+
+Chân ENA ---> Cắm vào chân D3 của Arduino (Bơm PWM cho bánh A)
+
+Chân IN1 ---> Cắm vào chân D4 của Arduino (Chiều quay tiến/lùi)
+
+Chân IN2 ---> Cắm vào chân D5 của Arduino (Chiều quay tiến/lùi)
+
+Chân ENB ---> Cắm vào chân D6 của Arduino (Bơm PWM cho bánh B)
+
+Chân IN3 ---> Cắm vào chân D7 của Arduino (Chiều quay tiến/lùi)
+
+Chân IN4 ---> Cắm vào chân D8 của Arduino (Chiều quay tiến/lùi)
+
+Chân GND ---> BẮT BUỘC nối chung với chân GND của Arduino
+
+Cấp nguồn 12V vào mạch điều khiển
+
+2. Động Cơ Servo (Bánh lái trước)
+
+Dây Tín hiệu (Cam/Vàng) ---> Cắm vào chân D9 của Arduino
+
+Dây VCC (Đỏ) ---> Nối với Nguồn điện ngoài (KHÔNG cắm vào 5V của Arduino để tránh sập nguồn)
+
+Dây GND (Nâu/Đen) ---> BẮT BUỘC nối chung với chân GND của Arduino
+
+3. Cảm Biến Khoảng Cách Siêu Âm (HC-SR04) - Dành cho AEB/ACC
+
+Chân Trig (Phát sóng) ---> Cắm vào chân A3 của Arduino
+
+Chân Echo (Nhận sóng) ---> Cắm vào chân A0 của Arduino
+
+Chân VCC ---> Cắm vào nguồn 5V
+
+Chân GND ---> Cắm vào chân GND
+
+4. Cảm Biến Hồng Ngoại TRÁI (TCRT5000) - Dành cho Giữ làn LKA
+
+Chân DO (Digital Out) ---> Cắm vào chân A1 của Arduino
+
+Chân VCC ---> Cắm vào nguồn 5V
+
+Chân GND ---> Cắm vào chân GND
+
+5. Cảm Biến Hồng Ngoại PHẢI (TCRT5000) - Dành cho Giữ làn LKA
+
+Chân DO (Digital Out) ---> Cắm vào chân A2 của Arduino
+
+Chân VCC ---> Cắm vào nguồn 5V
+
+Chân GND ---> Cắm vào chân GND
+
+6. Module CAN Bus (MCP2515)
+
+Chân CS ---> Cắm vào chân D10 của Arduino
+
+Chân SCK ---> Cắm vào chân D13 của Arduino
+
+Chân MOSI ---> Cắm vào chân D11 của Arduino
+
+Chân MISO ---> Cắm vào chân D12 của Arduino
+
+Chân VCC ---> Cắm vào nguồn 5V
+
+Chân GND ---> Cắm vào chân GND
